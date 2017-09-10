@@ -27,9 +27,66 @@ use pocketmine\command\CommandSender;
 use pocketmine\command\ConsoleCommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\command\SimpleCommandMap;
+use pocketmine\entity\Arrow;
 use pocketmine\entity\Attribute;
+use pocketmine\entity\Bat;
+use pocketmine\entity\Blaze;
+use pocketmine\entity\BlazeFireball;
+use pocketmine\entity\BlueWitherSkull;
+use pocketmine\entity\Boat;
+use pocketmine\entity\Camera;
+use pocketmine\entity\CaveSpider;
+use pocketmine\entity\Chicken;
+use pocketmine\entity\Cow;
+use pocketmine\entity\Creeper;
 use pocketmine\entity\Effect;
+use pocketmine\entity\Egg;
+use pocketmine\entity\Enderman;
+use pocketmine\entity\ElderGuardian;
 use pocketmine\entity\Entity;
+use pocketmine\entity\FallingSand;
+use pocketmine\entity\FishingHook;
+use pocketmine\entity\Ghast;
+use pocketmine\entity\GhastFireball;
+use pocketmine\entity\Guardian;
+use pocketmine\entity\Human;
+use pocketmine\entity\Husk;
+use pocketmine\entity\IronGolem;
+use pocketmine\entity\Item as DroppedItem;
+use pocketmine\entity\LavaSlime;
+use pocketmine\entity\LeashKnot;
+use pocketmine\entity\Lightning;
+use pocketmine\entity\Minecart;
+use pocketmine\entity\MinecartChest;
+use pocketmine\entity\MinecartHopper;
+use pocketmine\entity\MinecartTNT;
+use pocketmine\entity\Mooshroom;
+use pocketmine\entity\Ocelot;
+use pocketmine\entity\Painting;
+use pocketmine\entity\Pig;
+use pocketmine\entity\PigZombie;
+use pocketmine\entity\PrimedTNT;
+use pocketmine\entity\Rabbit;
+use pocketmine\entity\Sheep;
+use pocketmine\entity\Silverfish;
+use pocketmine\entity\Skeleton;
+use pocketmine\entity\Slime;
+use pocketmine\entity\Snowball;
+use pocketmine\entity\SnowGolem;
+use pocketmine\entity\Spider;
+use pocketmine\entity\Squid;
+use pocketmine\entity\Stray;
+use pocketmine\entity\ThrownExpBottle;
+use pocketmine\entity\ThrownPotion;
+use pocketmine\entity\Villager;
+use pocketmine\entity\Witch;
+use pocketmine\entity\Wither;
+use pocketmine\entity\WitherSkeleton;
+use pocketmine\entity\Wolf;
+use pocketmine\entity\XPOrb;
+use pocketmine\entity\Zombie;
+use pocketmine\entity\ZombieVillager;
+use pocketmine\entity\ai\AIHolder;
 use pocketmine\event\HandlerList;
 use pocketmine\event\level\LevelInitEvent;
 use pocketmine\event\level\LevelLoadEvent;
@@ -299,6 +356,9 @@ class Server{
 	public $antiFly = true;
 	public $allowInstabreak = false;
 	public $folderpluginloader = false;
+	public $aiConfig = [];
+  	public $aiEnabled = false;
+  	public $aiHolder = null;
 
 	/**
 	 * @return string
@@ -1434,6 +1494,10 @@ class Server{
 		}, $microseconds);
 	}
 
+	public function getAIHolder(){
+ 		return $this->aiHolder;
+ 	}
+	
 	public function loadAdvancedConfig(){
 		$this->playerMsgType = $this->getAdvancedProperty("server.player-msg-type", self::PLAYER_MSG_TYPE_MESSAGE);
 		$this->playerLoginMsg = $this->getAdvancedProperty("server.login-msg", "§3@player joined the game");
@@ -1480,6 +1544,20 @@ class Server{
 		$this->allowInstabreak = $this->getAdvancedProperty("anticheat.allow-instabreak", true);
 		$this->antiFly = $this->getAdvancedProperty("anticheat.anti-fly", true);
 		$this->folderpluginloader = $this->getAdvancedProperty("developer.folder-plugin-loader", false);
+		$this->aiEnabled = $this->getAdvancedProperty("ai.enable", false);
+  		$this->aiConfig = [
+  			"cow" => $this->getAdvancedProperty("ai.cow", true),
+  			"chicken" => $this->getAdvancedProperty("ai.chicken", true),
+  			"zombie" => $this->getAdvancedProperty("ai.zombie", 1),
+ 			"skeleton" => $this->getAdvancedProperty("ai.skeleton", true),
+  			"pig" => $this->getAdvancedProperty("ai.pig", true),
+  			"sheep" => $this->getAdvancedProperty("ai.sheep", true),
+  			"creeper" => $this->getAdvancedProperty("ai.creeper", true),
+  			"irongolem" => $this->getAdvancedProperty("ai.iron-golem", true),
+  			"snowgolem" => $this->getAdvancedProperty("ai.snow-golem", true),
+  			"pigzombie" => $this->getAdvancedProperty("ai.pigzombie", true),
+  			"creeperexplode" => $this->getAdvancedProperty("ai.creeper-explode-destroy-block", false),
+  			"mobgenerate" => $this->getAdvancedProperty("ai.mobgenerate", false),
 	}
 
 	/**
