@@ -21,17 +21,17 @@
 
 namespace pocketmine\entity;
 
-use pocketmine\item\enchantment\Enchantment;
-use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageEvent;
+use pocketmine\item\enchantment\Enchantment;
 use pocketmine\item\Item as ItemItem;
 use pocketmine\level\Level;
 use pocketmine\nbt\tag\ByteTag;
-use pocketmine\network\protocol\AddEntityPacket;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\protocol\AddEntityPacket;
 use pocketmine\Player;
 
-class Rabbit extends Animal {
+class Rabbit extends Animal{
 	const NETWORK_ID = 18;
 
 	const DATA_RABBIT_TYPE = 18;
@@ -51,12 +51,11 @@ class Rabbit extends Animal {
 
 	public $dropExp = [1, 3];
 
-	/**
-	 * Rabbit constructor.
-	 *
-	 * @param Level       $level
-	 * @param CompoundTag $nbt
-	 */
+	public function initEntity(){
+		$this->setMaxHealth(3);
+		parent::initEntity();
+	}
+
 	public function __construct(Level $level, CompoundTag $nbt){
 		if(!isset($nbt->RabbitType)){
 			$nbt->RabbitType = new ByteTag("RabbitType", $this->getRandomRabbitType());
@@ -66,44 +65,23 @@ class Rabbit extends Animal {
 		$this->setDataProperty(self::DATA_RABBIT_TYPE, self::DATA_TYPE_BYTE, $this->getRabbitType());
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getRandomRabbitType() : int{
 		$arr = [0, 1, 2, 3, 4, 5, 99];
-
 		return $arr[mt_rand(0, count($arr) - 1)];
 	}
 
-	/**
-	 * @return int
-	 */
-	public function getRabbitType() : int{
-		return (int) $this->namedtag["RabbitType"];
-	}
-
-	public function initEntity(){
-		$this->setMaxHealth(3);
-		parent::initEntity();
-	}
-
-	/**
-	 * @param int $type
-	 */
 	public function setRabbitType(int $type){
 		$this->namedtag->RabbitType = new ByteTag("RabbitType", $type);
 	}
 
-	/**
-	 * @return string
-	 */
+	public function getRabbitType() : int{
+		return (int) $this->namedtag["RabbitType"];
+	}
+
 	public function getName() : string{
 		return "Rabbit";
 	}
 
-	/**
-	 * @param Player $player
-	 */
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
@@ -122,9 +100,6 @@ class Rabbit extends Animal {
 		parent::spawnTo($player);
 	}
 
-	/**
-	 * @return array
-	 */
 	public function getDrops(){
 		$lootingL = 0;
 		$cause = $this->lastDamageCause;
@@ -141,7 +116,6 @@ class Rabbit extends Animal {
 		if(mt_rand(1, 200) <= (5 + 2 * $lootingL)){
 			$drops[] = ItemItem::get(ItemItem::RABBIT_FOOT, 0, 1);
 		}
-
 		return $drops;
 	}
 

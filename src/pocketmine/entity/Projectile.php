@@ -2,11 +2,11 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____  
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \ 
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
  * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/ 
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_| 
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,42 +15,33 @@
  *
  * @author PocketMine Team
  * @link http://www.pocketmine.net/
- * 
+ *
  *
 */
 
 namespace pocketmine\entity;
 
-
 use pocketmine\event\entity\EntityCombustByEntityEvent;
 use pocketmine\event\entity\EntityDamageByChildEntityEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
-
 use pocketmine\event\entity\ProjectileHitEvent;
-use pocketmine\item\Potion;
 use pocketmine\level\Level;
 use pocketmine\level\MovingObjectPosition;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ShortTag;
 
-abstract class Projectile extends Entity {
+abstract class Projectile extends Entity{
 
 	const DATA_SHOOTER_ID = 17;
 
 	/** @var Entity */
 	public $shootingEntity = null;
-	public $hadCollision = false;
 	protected $damage = 0;
 
-	/**
-	 * Projectile constructor.
-	 *
-	 * @param Level       $level
-	 * @param CompoundTag $nbt
-	 * @param Entity|null $shootingEntity
-	 */
+	public $hadCollision = false;
+
 	public function __construct(Level $level, CompoundTag $nbt, Entity $shootingEntity = null){
 		$this->shootingEntity = $shootingEntity;
 		if($shootingEntity !== null){
@@ -59,59 +50,25 @@ abstract class Projectile extends Entity {
 		parent::__construct($level, $nbt);
 	}
 
-	/**
-	 * @param float             $damage
-	 * @param EntityDamageEvent $source
-	 */
 	public function attack($damage, EntityDamageEvent $source){
 		if($source->getCause() === EntityDamageEvent::CAUSE_VOID){
 			parent::attack($damage, $source);
 		}
 	}
 
-	/**
-	 * @param Entity $entity
-	 *
-	 * @return bool
-	 */
+	protected function initEntity(){
+		parent::initEntity();
+
+		$this->setMaxHealth(1);
+		$this->setHealth(1);
+		if(isset($this->namedtag->Age)){
+			$this->age = $this->namedtag["Age"];
+		}
+
+	}
+
 	public function canCollideWith(Entity $entity){
 		return $entity instanceof Living and !$this->onGround;
-	}
-
-	/**
-	 * @param Entity $entity
-	 */
-	public function onCollideWithEntity(Entity $entity){
-		$this->server->getPluginManager()->callEvent(new ProjectileHitEvent($this));
-
-		$damage = $this->getResultDamage();
-
-		if($this->shootingEntity === null){
-			$ev = new EntityDamageByEntityEvent($this, $entity, EntityDamageEvent::CAUSE_PROJECTILE, $damage);
-		}else{
-			$ev = new EntityDamageByChildEntityEvent($this->shootingEntity, $this, $entity, EntityDamageEvent::CAUSE_PROJECTILE, $damage);
-		}
-
-		$entity->attack($ev->getFinalDamage(), $ev);
-
-		$this->hadCollision = true;
-
-		if($this->fireTicks > 0){
-			$ev = new EntityCombustByEntityEvent($this, $entity, 5);
-			$this->server->getPluginManager()->callEvent($ev);
-			if(!$ev->isCancelled()){
-				$entity->setOnFire($ev->getDuration());
-			}
-		}
-
-		$this->close();
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getResultDamage() : int{
-		return ceil(sqrt($this->motionX ** 2 + $this->motionY ** 2 + $this->motionZ ** 2) * $this->damage);
 	}
 
 	public function saveNBT(){
@@ -119,11 +76,6 @@ abstract class Projectile extends Entity {
 		$this->namedtag->Age = new ShortTag("Age", $this->age);
 	}
 
-	/**
-	 * @param $currentTick
-	 *
-	 * @return bool
-	 */
 	public function onUpdate($currentTick){
 		if($this->closed){
 			return false;
@@ -181,8 +133,36 @@ abstract class Projectile extends Entity {
 
 			if($movingObjectPosition !== null){
 				if($movingObjectPosition->entityHit !== null){
-					$this->onCollideWithEntity($movingObjectPosition->entityHit);
-					return false;
+
+					$this->server->getPluginManager()->callEvent(new ProjectileHitEvent($this));
+
+					$motion = sqrt($this->motionX ** 2 + $this->motionY ** 2 + $this->motionZ ** 2);
+					$damage = ceil($motion * $this->damage);
+
+					if($this instanceof Arrow and $this->isCritical){
+						$damage += mt_rand(0, (int) ($damage / 2) + 1);
+					}
+
+					if($this->shootingEntity === null){
+						$ev = new EntityDamageByEntityEvent($this, $movingObjectPosition->entityHit, EntityDamageEvent::CAUSE_PROJECTILE, $damage);
+					}else{
+						$ev = new EntityDamageByChildEntityEvent($this->shootingEntity, $this, $movingObjectPosition->entityHit, EntityDamageEvent::CAUSE_PROJECTILE, $damage);
+					}
+
+					$movingObjectPosition->entityHit->attack($ev->getFinalDamage(), $ev);
+
+					$this->hadCollision = true;
+
+					if($this->fireTicks > 0){
+						$ev = new EntityCombustByEntityEvent($this, $movingObjectPosition->entityHit, 5);
+						$this->server->getPluginManager()->callEvent($ev);
+						if(!$ev->isCancelled()){
+							$movingObjectPosition->entityHit->setOnFire($ev->getDuration());
+						}
+					}
+
+					$this->kill();
+					return true;
 				}
 			}
 
@@ -200,7 +180,7 @@ abstract class Projectile extends Entity {
 				$this->hadCollision = false;
 			}
 
-			if(!$this->hadCollision or abs($this->motionX) > 0.00001 or abs($this->motionY) > 0.00001 or abs($this->motionZ) > 0.00001){
+			if(!$this->onGround or abs($this->motionX) > 0.00001 or abs($this->motionY) > 0.00001 or abs($this->motionZ) > 0.00001){
 				$f = sqrt(($this->motionX ** 2) + ($this->motionZ ** 2));
 				$this->yaw = (atan2($this->motionX, $this->motionZ) * 180 / M_PI);
 				$this->pitch = (atan2($this->motionY, $f) * 180 / M_PI);
@@ -212,17 +192,6 @@ abstract class Projectile extends Entity {
 		}
 
 		return $hasUpdate;
-	}
-
-	protected function initEntity(){
-		parent::initEntity();
-
-		$this->setMaxHealth(1);
-		$this->setHealth(1);
-		if(isset($this->namedtag->Age)){
-			$this->age = $this->namedtag["Age"];
-		}
-
 	}
 
 }

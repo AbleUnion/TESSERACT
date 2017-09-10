@@ -21,10 +21,10 @@
 
 namespace pocketmine\entity;
 
+use pocketmine\network\mcpe\protocol\AddEntityPacket;
 use pocketmine\Player;
-use pocketmine\network\protocol\AddEntityPacket;
 
-class ZombieVillager extends Zombie {
+class ZombieVillager extends Zombie{
 	const NETWORK_ID = 44;
 
 	public $width = 1.031;
@@ -36,16 +36,10 @@ class ZombieVillager extends Zombie {
 		parent::initEntity();
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getName() : string{
 		return "Zombie Villager";
 	}
 
-	/**
-	 * @param Player $player
-	 */
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->type = ZombieVillager::NETWORK_ID;

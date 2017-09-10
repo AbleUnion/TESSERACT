@@ -22,37 +22,28 @@
 namespace pocketmine\entity;
 
 use pocketmine\event\player\PlayerFishEvent;
+use pocketmine\item\Item as ItemItem;
 use pocketmine\level\Level;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\Player;
-use pocketmine\item\Item as ItemItem;
-use pocketmine\network\protocol\EntityEventPacket;
 use pocketmine\network\protocol\AddEntityPacket;
+use pocketmine\network\protocol\EntityEventPacket;
+use pocketmine\Player;
 
 
-class FishingHook extends Projectile {
+class FishingHook extends Projectile{
 	const NETWORK_ID = 77;
 
 	public $width = 0.25;
 	public $length = 0.25;
 	public $height = 0.25;
+
+	protected $gravity = 0.1;
+	protected $drag = 0.05;
+
 	public $data = 0;
 	public $attractTimer = 100;
 	public $coughtTimer = 0;
 	public $damageRod = false;
-	protected $gravity = 0.1;
-	protected $drag = 0.05;
-
-	/**
-	 * FishingHook constructor.
-	 *
-	 * @param Level       $level
-	 * @param CompoundTag $nbt
-	 * @param Entity|null $shootingEntity
-	 */
-	public function __construct(Level $level, CompoundTag $nbt, Entity $shootingEntity = null){
-		parent::__construct($level, $nbt, $shootingEntity);
-	}
 
 	public function initEntity(){
 		parent::initEntity();
@@ -60,29 +51,20 @@ class FishingHook extends Projectile {
 		if(isset($this->namedtag->Data)){
 			$this->data = $this->namedtag["Data"];
 		}
-
-		// $this->setDataProperty(FallingSand::DATA_BLOCK_INFO, self::DATA_TYPE_INT, $this->getData());
 	}
 
-	/**
-	 * @return int
-	 */
-	public function getData(){
-		return $this->data;
+	public function __construct(Level $level, CompoundTag $nbt, Entity $shootingEntity = null){
+		parent::__construct($level, $nbt, $shootingEntity);
 	}
 
-	/**
-	 * @param $id
-	 */
 	public function setData($id){
 		$this->data = $id;
 	}
 
-	/**
-	 * @param $currentTick
-	 *
-	 * @return bool
-	 */
+	public function getData(){
+		return $this->data;
+	}
+
 	public function onUpdate($currentTick){
 		if($this->closed){
 			return false;
@@ -124,15 +106,6 @@ class FishingHook extends Projectile {
 		return $hasUpdate;
 	}
 
-	public function attractFish(){
-		if($this->shootingEntity instanceof Player){
-			$pk = new EntityEventPacket();
-			$pk->eid = $this->shootingEntity->getId();//$this or $this->shootingEntity
-			$pk->event = EntityEventPacket::FISH_HOOK_BUBBLE;
-			$this->server->broadcastPacket($this->shootingEntity->hasSpawned, $pk);
-		}
-	}
-
 	public function fishBites(){
 		if($this->shootingEntity instanceof Player){
 			$pk = new EntityEventPacket();
@@ -142,9 +115,15 @@ class FishingHook extends Projectile {
 		}
 	}
 
-	/**
-	 * @return bool
-	 */
+	public function attractFish(){
+		if($this->shootingEntity instanceof Player){
+			$pk = new EntityEventPacket();
+			$pk->eid = $this->shootingEntity->getId();//$this or $this->shootingEntity
+			$pk->event = EntityEventPacket::FISH_HOOK_BUBBLE;
+			$this->server->broadcastPacket($this->shootingEntity->hasSpawned, $pk);
+		}
+	}
+
 	public function reelLine(){
 		$this->damageRod = false;
 
@@ -172,9 +151,6 @@ class FishingHook extends Projectile {
 		return $this->damageRod;
 	}
 
-	/**
-	 * @param Player $player
-	 */
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();

@@ -26,7 +26,7 @@ use pocketmine\level\sound\ExpPickupSound;
 use pocketmine\network\protocol\AddEntityPacket;
 use pocketmine\Player;
 
-class XPOrb extends Entity {
+class XPOrb extends Entity{
 	const NETWORK_ID = 69;
 
 	public $width = 0.25;
@@ -35,9 +35,9 @@ class XPOrb extends Entity {
 
 	protected $gravity = 0.04;
 	protected $drag = 0;
-
+	
 	protected $experience = 0;
-
+	
 	protected $range = 6;
 
 	public function initEntity(){
@@ -47,22 +47,17 @@ class XPOrb extends Entity {
 		}else $this->close();
 	}
 
-	/**
-	 * @param $currentTick
-	 *
-	 * @return bool
-	 */
 	public function onUpdate($currentTick){
 		if($this->closed){
 			return false;
 		}
-
+		
 		$tickDiff = $currentTick - $this->lastUpdate;
-
+		
 		$this->lastUpdate = $currentTick;
-
+		
 		$this->timings->startTiming();
-
+		
 		$hasUpdate = $this->entityBaseTick($tickDiff);
 
 		$this->age++;
@@ -72,7 +67,7 @@ class XPOrb extends Entity {
 			$this->close();
 			$hasUpdate = true;
 		}
-
+		
 		$minDistance = PHP_INT_MAX;
 		$target = null;
 		foreach($this->getViewers() as $p){
@@ -81,9 +76,9 @@ class XPOrb extends Entity {
 					$target = $p;
 					$minDistance = $dist;
 				}
-			}
+			} 
 		}
-
+		
 		if($target !== null){
 			$moveSpeed = 0.7;
 			$motX = ($target->getX() - $this->x) / 8;
@@ -91,7 +86,7 @@ class XPOrb extends Entity {
 			$motZ = ($target->getZ() - $this->z) / 8;
 			$motSqrt = sqrt($motX * $motX + $motY * $motY + $motZ * $motZ);
 			$motC = 1 - $motSqrt;
-
+		
 			if($motC > 0){
 				$motC *= $motC;
 				$this->motionX = $motX / $motSqrt * $motC * $moveSpeed;
@@ -126,40 +121,26 @@ class XPOrb extends Entity {
 		}
 
 		$this->move($this->motionX, $this->motionY, $this->motionZ);
-
+		
 		$this->updateMovement();
-
+		
 		$this->timings->stopTiming();
 
 		return $hasUpdate or !$this->onGround or abs($this->motionX) > 0.00001 or abs($this->motionY) > 0.00001 or abs($this->motionZ) > 0.00001;
 	}
 
-	/**
-	 * @return int
-	 */
+	public function canCollideWith(Entity $entity){
+		return false;
+	}
+	
+	public function setExperience($exp){
+		$this->experience = $exp;
+	}
+	
 	public function getExperience(){
 		return $this->experience;
 	}
 
-	/**
-	 * @param $exp
-	 */
-	public function setExperience($exp){
-		$this->experience = $exp;
-	}
-
-	/**
-	 * @param Entity $entity
-	 *
-	 * @return bool
-	 */
-	public function canCollideWith(Entity $entity){
-		return false;
-	}
-
-	/**
-	 * @param Player $player
-	 */
 	public function spawnTo(Player $player){
 		$this->setDataFlag(self::DATA_FLAGS, self::DATA_FLAG_NO_AI, true);
 		$pk = new AddEntityPacket();

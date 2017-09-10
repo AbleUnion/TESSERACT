@@ -2,20 +2,23 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____  
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \ 
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/ 
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_| 
+ *  _____            _               _____           
+ * / ____|          (_)             |  __ \          
+ *| |  __  ___ _ __  _ ___ _   _ ___| |__) | __ ___  
+ *| | |_ |/ _ \ '_ \| / __| | | / __|  ___/ '__/ _ \ 
+ *| |__| |  __/ | | | \__ \ |_| \__ \ |   | | | (_) |
+ * \_____|\___|_| |_|_|___/\__, |___/_|   |_|  \___/ 
+ *                         __/ |                    
+ *                        |___/                     
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- * 
+ * @author GenisysPro
+ * @link https://github.com/GenisysPro/GenisysPro
+ *
  *
 */
 
@@ -25,18 +28,15 @@ use pocketmine\network\protocol\AddEntityPacket;
 use pocketmine\Player;
 use pocketmine\item\Item as ItemItem;
 
-class Wither extends FlyingAnimal {
+class Wither extends FlyingAnimal{
 	const NETWORK_ID = 52;
 
 	public $width = 0.72;
-	public $length = 6; //TODO: Find the good one.
+	public $length = 6;
 	public $height = 2;
 
 	public $dropExp = 50;
-
-	/**
-	 * @return string
-	 */
+	
 	public function getName() : string{
 		return "Wither";
 	}
@@ -45,10 +45,7 @@ class Wither extends FlyingAnimal {
 		$this->setMaxHealth(300);
 		parent::initEntity();
 	}
-
-	/**
-	 * @param Player $player
-	 */
+	
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
@@ -67,14 +64,10 @@ class Wither extends FlyingAnimal {
 		parent::spawnTo($player);
 	}
 
-	//TODO: Add his spawn scenario and his death scenario
+	//TODO: 添加出生和死亡情景
 
-	/**
-	 * @return array
-	 */
 	public function getDrops(){
 		$drops = [ItemItem::get(ItemItem::NETHER_STAR, 0, 1)];
-
 		return $drops;
 	}
 }

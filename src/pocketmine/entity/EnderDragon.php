@@ -1,52 +1,40 @@
 <?php
 
 /*
- *
- *    _______                                _
- *   |__   __|                              | |
- *      | | ___  ___ ___  ___ _ __ __ _  ___| |_
- *      | |/ _ \/ __/ __|/ _ \  __/ _` |/ __| __|
- *      | |  __/\__ \__ \  __/ | | (_| | (__| |_
- *      |_|\___||___/___/\___|_|  \__,_|\___|\__|
- *
- *
+ *   ____  _            _      _       _     _
+ *  |  _ \| |          | |    (_)     | |   | |
+ *  | |_) | |_   _  ___| |     _  __ _| |__ | |_
+ *  |  _ <| | | | |/ _ \ |    | |/ _` | '_ \| __|
+ *  | |_) | | |_| |  __/ |____| | (_| | | | | |_
+ *  |____/|_|\__,_|\___|______|_|\__, |_| |_|\__|
+ *                                __/ |
+ *                               |___/
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author Tesseract Team
- * @link http://www.github.com/TesseractTeam/Tesseract
+ * @author BlueLightJapan Team
  * 
- *
- */
+*/
+
 
 namespace pocketmine\entity;
-
-use pocketmine\Player;
 use pocketmine\network\protocol\AddEntityPacket;
+use pocketmine\Player;
 
-class EnderDragon extends Monster {
-
+class EnderDragon extends Monster{
 	const NETWORK_ID = 53;
 
-	public $dropExp = [500, 12, 000];//TODO: Add death animation and exp drop.
+	public $width = 0.3;
+	public $length = 0.9;
+	public $height = 1.8;
+	public $maxhealth = 200;
 
-	public function initEntity(){
-		$this->setMaxHealth(200);
-		parent::initEntity();
+	public function getName(){
+		return "EnderDragon";
 	}
-
-	/**
-	 * @return string
-	 */
-	public function getName() : string{
-		return "Ender Dragon";
-	}
-
-	/**
-	 * @param Player $player
-	 */
+	
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
@@ -64,5 +52,4 @@ class EnderDragon extends Monster {
 
 		parent::spawnTo($player);
 	}
-
 }

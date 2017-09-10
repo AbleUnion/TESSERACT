@@ -21,27 +21,21 @@
 
 namespace pocketmine\entity;
 
-use pocketmine\network\protocol\AddEntityPacket;
+use pocketmine\network\mcpe\protocol\AddEntityPacket;
 use pocketmine\Player;
 
 
-class Camera extends Living {
+class Camera extends Living{
 	const NETWORK_ID = 62;
 
 	public $width = 1;
 	public $length = 2;
 	public $height = 2;
-
-	/**
-	 * @return string
-	 */
+	
 	public function getName() : string{
 		return "Camera";
 	}
-
-	/**
-	 * @param Player $player
-	 */
+	
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
@@ -58,10 +52,7 @@ class Camera extends Living {
 		$player->dataPacket($pk);
 		parent::spawnTo($player);
 	}
-
-	/**
-	 * @return array
-	 */
+	
 	public function getDrops(){
 		return [];
 	}

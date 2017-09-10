@@ -21,9 +21,7 @@
 
 namespace pocketmine\entity;
 
-use pocketmine\Server;
-
-class Attribute {
+class Attribute{
 
 	const ABSORPTION = 0;
 	const SATURATION = 1;
@@ -37,8 +35,8 @@ class Attribute {
 	const ATTACK_DAMAGE = 8;
 	const EXPERIENCE_LEVEL = 9;
 	const EXPERIENCE = 10;
-	/** @var Attribute[] */
-	protected static $attributes = [];
+
+	private $id;
 	protected $minValue;
 	protected $maxValue;
 	protected $defaultValue;
@@ -47,28 +45,9 @@ class Attribute {
 	protected $shouldSend;
 
 	protected $desynchronized = true;
-	private $id;
 
-	/**
-	 * Attribute constructor.
-	 *
-	 * @param      $id
-	 * @param      $name
-	 * @param      $minValue
-	 * @param      $maxValue
-	 * @param      $defaultValue
-	 * @param bool $shouldSend
-	 */
-	private function __construct($id, $name, $minValue, $maxValue, $defaultValue, $shouldSend = true){
-		$this->id = (int) $id;
-		$this->name = (string) $name;
-		$this->minValue = (float) $minValue;
-		$this->maxValue = (float) $maxValue;
-		$this->defaultValue = (float) $defaultValue;
-		$this->shouldSend = (bool) $shouldSend;
-
-		$this->currentValue = $this->defaultValue;
-	}
+	/** @var Attribute[] */
+	protected static $attributes = [];
 
 	public static function init(){
 		self::addAttribute(self::ABSORPTION, "minecraft:absorption", 0.00, 340282346638528859811704183484516925440.00, 0.00);
@@ -127,54 +106,21 @@ class Attribute {
 		return null;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getName(){
-		return $this->name;
+	private function __construct($id, $name, $minValue, $maxValue, $defaultValue, $shouldSend = true){
+		$this->id = (int) $id;
+		$this->name = (string) $name;
+		$this->minValue = (float) $minValue;
+		$this->maxValue = (float) $maxValue;
+		$this->defaultValue = (float) $defaultValue;
+		$this->shouldSend = (bool) $shouldSend;
+
+		$this->currentValue = $this->defaultValue;
 	}
 
-	/**
-	 * @return float
-	 */
-	public function getDefaultValue(){
-		return $this->defaultValue;
-	}
-
-	/**
-	 * @param $defaultValue
-	 *
-	 * @return $this
-	 */
-	public function setDefaultValue($defaultValue){
-		if($defaultValue > $this->getMaxValue() or $defaultValue < $this->getMinValue()){
-			throw new \InvalidArgumentException("Value $defaultValue exceeds the range!");
-		}
-
-		if($this->defaultValue !== $defaultValue){
-			$this->desynchronized = true;
-			$this->defaultValue = $defaultValue;
-		}
-
-		return $this;
-	}
-
-	public function resetToDefault(){
-		$this->setValue($this->getDefaultValue());
-	}
-
-	/**
-	 * @return float
-	 */
 	public function getMinValue(){
 		return $this->minValue;
 	}
 
-	/**
-	 * @param $minValue
-	 *
-	 * @return $this
-	 */
 	public function setMinValue($minValue){
 		if($minValue > $this->getMaxValue()){
 			throw new \InvalidArgumentException("Value $minValue is bigger than the maxValue!");
@@ -184,22 +130,13 @@ class Attribute {
 			$this->desynchronized = true;
 			$this->minValue = $minValue;
 		}
-
 		return $this;
 	}
 
-	/**
-	 * @return float
-	 */
 	public function getMaxValue(){
 		return $this->maxValue;
 	}
 
-	/**
-	 * @param $maxValue
-	 *
-	 * @return $this
-	 */
 	public function setMaxValue($maxValue){
 		if($maxValue < $this->getMinValue()){
 			throw new \InvalidArgumentException("Value $maxValue is bigger than the minValue!");
@@ -209,28 +146,37 @@ class Attribute {
 			$this->desynchronized = true;
 			$this->maxValue = $maxValue;
 		}
-
 		return $this;
 	}
 
-	/**
-	 * @return float
-	 */
+	public function getDefaultValue(){
+		return $this->defaultValue;
+	}
+
+	public function setDefaultValue($defaultValue){
+		if($defaultValue > $this->getMaxValue() or $defaultValue < $this->getMinValue()){
+			throw new \InvalidArgumentException("Value $defaultValue exceeds the range!");
+		}
+
+		if($this->defaultValue !== $defaultValue){
+			$this->desynchronized = true;
+			$this->defaultValue = $defaultValue;
+		}
+		return $this;
+	}
+
+	public function resetToDefault(){
+		$this->setValue($this->getDefaultValue());
+	}
+
 	public function getValue(){
 		return $this->currentValue;
 	}
 
-	/**
-	 * @param      $value
-	 * @param bool $fit
-	 * @param bool $shouldSend
-	 *
-	 * @return $this
-	 */
-	public function setValue($value, bool $fit = true, bool $shouldSend = false){
+	public function setValue($value, $fit = false, bool $forceSend = false){
 		if($value > $this->getMaxValue() or $value < $this->getMinValue()){
 			if(!$fit){
-				Server::getInstance()->getLogger()->error("[Attribute / {$this->getName()}] Value $value exceeds the range!");
+				throw new \InvalidArgumentException("Value $value exceeds the range!");
 			}
 			$value = min(max($value, $this->getMinValue()), $this->getMaxValue());
 		}
@@ -238,39 +184,29 @@ class Attribute {
 		if($this->currentValue != $value){
 			$this->desynchronized = true;
 			$this->currentValue = $value;
-		}
-
-		if($shouldSend){
+		}elseif($forceSend){
 			$this->desynchronized = true;
 		}
 
 		return $this;
 	}
 
-	/**
-	 * @return int
-	 */
+	public function getName(){
+		return $this->name;
+	}
+
 	public function getId(){
 		return $this->id;
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isSyncable(){
 		return $this->shouldSend;
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isDesynchronized() : bool{
 		return $this->shouldSend and $this->desynchronized;
 	}
 
-	/**
-	 * @param bool $synced
-	 */
 	public function markSynchronized(bool $synced = true){
 		$this->desynchronized = !$synced;
 	}

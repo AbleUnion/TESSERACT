@@ -21,15 +21,15 @@
 
 namespace pocketmine\entity;
 
+use pocketmine\item\Potion;
 use pocketmine\level\Level;
 use pocketmine\level\particle\SpellParticle;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ShortTag;
-use pocketmine\network\protocol\AddEntityPacket;
+use pocketmine\network\mcpe\protocol\AddEntityPacket;
 use pocketmine\Player;
-use pocketmine\item\Potion;
 
-class ThrownPotion extends Projectile {
+class ThrownPotion extends Projectile{
 	const NETWORK_ID = 86;
 
 	const DATA_POTION_ID = 16;
@@ -43,13 +43,6 @@ class ThrownPotion extends Projectile {
 
 	private $hasSplashed = false;
 
-	/**
-	 * ThrownPotion constructor.
-	 *
-	 * @param Level       $level
-	 * @param CompoundTag $nbt
-	 * @param Entity|null $shootingEntity
-	 */
 	public function __construct(Level $level, CompoundTag $nbt, Entity $shootingEntity = null){
 		if(!isset($nbt->PotionId)){
 			$nbt->PotionId = new ShortTag("PotionId", Potion::AWKWARD);
@@ -61,18 +54,28 @@ class ThrownPotion extends Projectile {
 		$this->setDataProperty(self::DATA_POTION_ID, self::DATA_TYPE_SHORT, $this->getPotionId());
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getPotionId() : int{
 		return (int) $this->namedtag["PotionId"];
 	}
 
-	/**
-	 * @param $currentTick
-	 *
-	 * @return bool
-	 */
+	public function splash(){
+		if(!$this->hasSplashed){
+			$this->hasSplashed = true;
+			$color = Potion::getColor($this->getPotionId());
+			$this->getLevel()->addParticle(new SpellParticle($this, $color[0], $color[1], $color[2]));
+			$players = $this->getViewers();
+			foreach($players as $p) {
+				if($p->distance($this) <= 6) {
+					foreach(Potion::getEffectsById($this->getPotionId()) as $effect) {
+						$p->addEffect($effect);
+					}
+				}
+			}
+
+			$this->kill();
+		}
+	}
+
 	public function onUpdate($currentTick){
 		if($this->closed){
 			return false;
@@ -94,27 +97,6 @@ class ThrownPotion extends Projectile {
 		return $hasUpdate;
 	}
 
-	public function splash(){
-		if(!$this->hasSplashed){
-			$this->hasSplashed = true;
-			$color = Potion::getColor($this->getPotionId());
-			$this->getLevel()->addParticle(new SpellParticle($this, $color[0], $color[1], $color[2]));
-			$players = $this->getViewers();
-			foreach($players as $p){
-				if($p->distance($this) <= 6){
-					foreach(Potion::getEffectsById($this->getPotionId()) as $effect){
-						$p->addEffect($effect);
-					}
-				}
-			}
-
-			$this->kill();
-		}
-	}
-
-	/**
-	 * @param Player $player
-	 */
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->type = ThrownPotion::NETWORK_ID;

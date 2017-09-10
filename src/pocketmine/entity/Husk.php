@@ -21,22 +21,16 @@
 
 namespace pocketmine\entity;
 
+use pocketmine\network\mcpe\protocol\AddEntityPacket;
 use pocketmine\Player;
-use pocketmine\network\protocol\AddEntityPacket;
 
-class Husk extends Zombie {
+class Husk extends Zombie{
 	const NETWORK_ID = 47;
-
-	/**
-	 * @return string
-	 */
+	
 	public function getName() : string{
 		return "Husk";
 	}
-
-	/**
-	 * @param Player $player
-	 */
+	
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();

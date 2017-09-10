@@ -23,49 +23,38 @@ namespace pocketmine\entity;
 
 use pocketmine\block\Liquid;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\item\Item as ItemItem;
 use pocketmine\math\Vector3;
 use pocketmine\network\protocol\AddEntityPacket;
 use pocketmine\network\protocol\ExplodePacket;
-use pocketmine\item\Item as ItemItem;
 use pocketmine\Player;
 
-class Lightning extends Animal {
+class Lightning extends Animal{
 	const NETWORK_ID = 93;
 
 	public $width = 0.3;
 	public $length = 0.9;
 	public $height = 1.8;
 
-	/**
-	 * @return string
-	 */
 	public function getName() : string{
 		return "Lightning";
 	}
 
 	public function initEntity(){
-		$this->setMaxHealth(2);
 		parent::initEntity();
+		$this->setMaxHealth(2);
+		$this->setHealth(2);
 	}
 
-	/**
-	 * @param $tick
-	 *
-	 * @return bool
-	 */
 	public function onUpdate($tick){
 		parent::onUpdate($tick);
 		if($this->age > 20){
 			$this->kill();
 			$this->close();
 		}
-
 		return true;
 	}
 
-	/**
-	 * @param Player $player
-	 */
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
@@ -115,6 +104,10 @@ class Lightning extends Animal {
 						$ev->useArmors();
 					}
 					$entity->setOnFire(mt_rand(3, 8));
+				}
+
+				if($entity instanceof Creeper){
+					$entity->setPowered(true, $this);
 				}
 			}
 		}

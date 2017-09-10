@@ -23,12 +23,12 @@ namespace pocketmine\entity;
 
 use pocketmine\block\Block;
 use pocketmine\block\Rail;
-use pocketmine\network\protocol\AddEntityPacket;
-use pocketmine\Player;
 use pocketmine\math\Math;
 use pocketmine\math\Vector3;
+use pocketmine\network\protocol\AddEntityPacket;
+use pocketmine\Player;
 
-class Minecart extends Vehicle {
+class Minecart extends Vehicle{
 	const NETWORK_ID = 84;
 
 	const TYPE_NORMAL = 1;
@@ -64,25 +64,14 @@ class Minecart extends Vehicle {
 		parent::initEntity();
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getName() : string{
 		return "Minecart";
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getType() : int{
 		return self::TYPE_NORMAL;
 	}
 
-	/**
-	 * @param $currentTick
-	 *
-	 * @return bool
-	 */
 	public function onUpdate($currentTick){
 		if($this->closed !== false){
 			return false;
@@ -135,13 +124,22 @@ class Minecart extends Vehicle {
 		}
 	}
 
-	/**
-	 * @param $rail
-	 *
-	 * @return bool
-	 */
-	private function isRail($rail){
+	private function isRail(Block $rail){
 		return ($rail !== null and in_array($rail->getId(), [Block::RAIL, Block::ACTIVATOR_RAIL, Block::DETECTOR_RAIL, Block::POWERED_RAIL]));
+	}
+
+	private function getCurrentRail(){
+		$block = $this->getLevel()->getBlock($this);
+		if($this->isRail($block)){
+			return $block;
+		}
+		// Rail could be one block below descending down
+		$down = $this->temporalVector->setComponents($this->x, $this->y - 1, $this->z);
+		$block = $this->getLevel()->getBlock($down);
+		if($this->isRail($block)){
+			return $block;
+		}
+		return null;
 	}
 
 	/**
@@ -177,37 +175,17 @@ class Minecart extends Vehicle {
 			// Not able to find rail
 			$this->state = Minecart::STATE_INITIAL;
 		}
-
 		return false;
 	}
 
 	/**
-	 * @return null|Block
-	 */
-	private function getCurrentRail(){
-		$block = $this->getLevel()->getBlock($this);
-		if($this->isRail($block)){
-			return $block;
-		}
-		// Rail could be one block below descending down
-		$down = $this->temporalVector->setComponents($this->x, $this->y - 1, $this->z);
-		$block = $this->getLevel()->getBlock($down);
-		if($this->isRail($block)){
-			return $block;
-		}
-
-		return null;
-	}
-
-	/**
 	 * Determine the direction the minecart should move based on the candidate direction (current direction
-	 * minecart is moving, or the direction the player is looking) and the type of rail that the minecart is
-	 * on.
+	 * minecart is moving, or the direction the player is looking) and the type of rail that the minecart is on.
 	 *
-	 * @param RailType  $railType           Type of rail the minecart is on.
-	 * @param Direction $candidateDirection Direction minecart already moving, or direction player looking.
+	 * @param int $railType Type of rail the minecart is on.
+	 * @param int $candidateDirection Direction minecart already moving, or direction player looking.
 	 *
-	 * @return int|Direction
+	 * @return int The direction the minecart should move.
 	 */
 	private function getDirectionToMove($railType, $candidateDirection){
 		switch($railType){
@@ -275,7 +253,6 @@ class Minecart extends Vehicle {
 				}
 				break;
 		}
-
 		return -1;
 	}
 
@@ -283,11 +260,10 @@ class Minecart extends Vehicle {
 	 * Need to alter direction on curves halfway through the turn and reset the minecart to be in the middle of
 	 * the rail again so as not to collide with nearby blocks.
 	 *
-	 * @param Direction $currentDirection Direction minecart currently moving
-	 * @param Direction $newDirection     Direction minecart should turn once has hit the halfway point.
+	 * @param int $currentDirection Direction minecart currently moving
+	 * @param int $newDirection Direction minecart should turn once has hit the halfway point.
 	 *
-	 * @return Direction Either the current direction or the new direction depending on haw far across the rail the
-	 * minecart is.
+	 * @return int Either the current direction or the new direction depending on haw far across the rail the minecart is.
 	 */
 	private function checkForTurn($currentDirection, $newDirection){
 		switch($currentDirection){
@@ -296,7 +272,6 @@ class Minecart extends Vehicle {
 				if($diff !== 0 and $diff <= .5){
 					$dx = ($this->getFloorX() + .5) - $this->x;
 					$this->move($dx, 0, 0);
-
 					return $newDirection;
 				}
 				break;
@@ -305,7 +280,6 @@ class Minecart extends Vehicle {
 				if($diff !== 0 and $diff >= .5){
 					$dx = ($this->getFloorX() + .5) - $this->x;
 					$this->move($dx, 0, 0);
-
 					return $newDirection;
 				}
 				break;
@@ -314,7 +288,6 @@ class Minecart extends Vehicle {
 				if($diff !== 0 and $diff <= .5){
 					$dz = ($this->getFloorZ() + .5) - $this->z;
 					$this->move(0, 0, $dz);
-
 					return $newDirection;
 				}
 				break;
@@ -323,21 +296,13 @@ class Minecart extends Vehicle {
 				if($diff !== 0 and $diff >= .5){
 					$dz = $dz = ($this->getFloorZ() + .5) - $this->z;
 					$this->move(0, 0, $dz);
-
 					return $newDirection;
 				}
 				break;
 		}
-
 		return $currentDirection;
 	}
 
-	/**
-	 * @param $railType
-	 * @param $currentDirection
-	 *
-	 * @return bool
-	 */
 	private function checkForVertical($railType, $currentDirection){
 		switch($railType){
 			case Rail::SLOPED_ASCENDING_NORTH:
@@ -348,17 +313,15 @@ class Minecart extends Vehicle {
 						if($diff !== 0 and $diff <= .5){
 							$dx = ($this->getFloorX() - .1) - $this->x;
 							$this->move($dx, 1, 0);
-
 							return true;
 						}
 						break;
-					case ENTITY::SOUTH:
+					case Entity::SOUTH:
 						// Headed south down
 						$diff = $this->x - $this->getFloorX();
 						if($diff !== 0 and $diff >= .5){
 							$dx = ($this->getFloorX() + 1) - $this->x;
 							$this->move($dx, -1, 0);
-
 							return true;
 						}
 						break;
@@ -372,7 +335,6 @@ class Minecart extends Vehicle {
 						if($diff !== 0 and $diff >= .5){
 							$dx = ($this->getFloorX() + 1) - $this->x;
 							$this->move($dx, 1, 0);
-
 							return true;
 						}
 						break;
@@ -382,7 +344,6 @@ class Minecart extends Vehicle {
 						if($diff !== 0 and $diff <= .5){
 							$dx = ($this->getFloorX() - .1) - $this->x;
 							$this->move($dx, -1, 0);
-
 							return true;
 						}
 						break;
@@ -396,7 +357,6 @@ class Minecart extends Vehicle {
 						if($diff !== 0 and $diff <= .5){
 							$dz = ($this->getFloorZ() - .1) - $this->z;
 							$this->move(0, 1, $dz);
-
 							return true;
 						}
 						break;
@@ -406,7 +366,6 @@ class Minecart extends Vehicle {
 						if($diff !== 0 and $diff >= .5){
 							$dz = ($this->getFloorZ() + 1) - $this->z;
 							$this->move(0, -1, $dz);
-
 							return true;
 						}
 						break;
@@ -420,7 +379,6 @@ class Minecart extends Vehicle {
 						if($diff !== 0 and $diff >= .5){
 							$dz = ($this->getFloorZ() + 1) - $this->z;
 							$this->move(0, 1, $dz);
-
 							return true;
 						}
 						break;
@@ -430,21 +388,19 @@ class Minecart extends Vehicle {
 						if($diff !== 0 and $diff <= .5){
 							$dz = ($this->getFloorZ() - .1) - $this->z;
 							$this->move(0, -1, $dz);
-
 							return true;
 						}
 						break;
 				}
 				break;
 		}
-
 		return false;
 	}
 
 	/**
 	 * Move the minecart as long as it will still be moving on to another piece of rail.
 	 *
-	 * @return boolean True if the minecart moved.
+	 * @return bool True if the minecart moved.
 	 */
 	private function moveIfRail(){
 		$nextMoveVector = $this->moveVector[$this->direction];
@@ -453,9 +409,10 @@ class Minecart extends Vehicle {
 		$possibleRail = $this->getCurrentRail();
 		if(in_array($possibleRail->getId(), [Block::RAIL, Block::ACTIVATOR_RAIL, Block::DETECTOR_RAIL, Block::POWERED_RAIL])){
 			$this->moveUsingVector($newVector);
-
 			return true;
 		}
+
+		return false;
 	}
 
 	/**
@@ -503,19 +460,15 @@ class Minecart extends Vehicle {
 				$minDistance = $dis;
 			}
 		}
-
 		return $nearestRail;
 	}
 
-	/**
-	 * @param Player $player
-	 */
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
 		$pk->type = Minecart::NETWORK_ID;
 		$pk->x = $this->x;
-		$pk->y = $this->y - 2;
+		$pk->y = $this->y;
 		$pk->z = $this->z;
 		$pk->speedX = 0;
 		$pk->speedY = 0;

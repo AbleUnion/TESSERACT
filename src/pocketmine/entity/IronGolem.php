@@ -21,33 +21,27 @@
 
 namespace pocketmine\entity;
 
-use pocketmine\network\protocol\AddEntityPacket;
-use pocketmine\Player;
 use pocketmine\item\Item as ItemItem;
+use pocketmine\network\mcpe\protocol\AddEntityPacket;
+use pocketmine\Player;
 
-class IronGolem extends Animal {
+class IronGolem extends Animal{
 	const NETWORK_ID = 20;
 
 	public $width = 0.3;
 	public $length = 0.9;
 	public $height = 2.8;
-
+	
 	public function initEntity(){
 		$this->setMaxHealth(100);
 		parent::initEntity();
 	}
-
-	/**
-	 * @return string
-	 */
-	public function getName(){
+	
+	public function getName() {
 		return "Iron Golem";
 	}
-
-	/**
-	 * @param Player $player
-	 */
-	public function spawnTo(Player $player){
+	
+	public function spawnTo(Player $player) {
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
 		$pk->type = self::NETWORK_ID;
@@ -65,14 +59,10 @@ class IronGolem extends Animal {
 		parent::spawnTo($player);
 	}
 
-	/**
-	 * @return array
-	 */
 	public function getDrops(){
 		//Not affected by Looting.
 		$drops = array(ItemItem::get(ItemItem::IRON_INGOT, 0, mt_rand(3, 5)));
 		$drops[] = ItemItem::get(ItemItem::POPPY, 0, mt_rand(0, 2));
-
 		return $drops;
 	}
 }

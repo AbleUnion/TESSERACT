@@ -21,13 +21,13 @@
 
 namespace pocketmine\entity;
 
-use pocketmine\item\enchantment\Enchantment;
-use pocketmine\network\protocol\AddEntityPacket;
-use pocketmine\Player;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\item\enchantment\Enchantment;
 use pocketmine\item\Item as ItemItem;
+use pocketmine\network\mcpe\protocol\AddEntityPacket;
+use pocketmine\Player;
 
-class Pig extends Animal {
+class Pig extends Animal{
 	const NETWORK_ID = 12;
 
 	public $width = 0.3;
@@ -35,17 +35,11 @@ class Pig extends Animal {
 	public $height = 1.9;
 
 	public $dropExp = [1, 3];
-
-	/**
-	 * @return string
-	 */
+	
 	public function getName() : string{
 		return "Pig";
 	}
-
-	/**
-	 * @param Player $player
-	 */
+	
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->getId();
@@ -63,10 +57,7 @@ class Pig extends Animal {
 
 		parent::spawnTo($player);
 	}
-
-	/**
-	 * @return array
-	 */
+	
 	public function getDrops(){
 		$lootingL = 0;
 		$cause = $this->lastDamageCause;
@@ -74,7 +65,6 @@ class Pig extends Animal {
 			$lootingL = $cause->getDamager()->getItemInHand()->getEnchantmentLevel(Enchantment::TYPE_WEAPON_LOOTING);
 		}
 		$drops = array(ItemItem::get(ItemItem::RAW_PORKCHOP, 0, mt_rand(1, 3 + $lootingL)));
-
 		return $drops;
 	}
 }
